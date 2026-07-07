@@ -31,6 +31,13 @@ GLOBAL_CSS = """
 html, body, [class*="css"] {
   font-family: 'IBM Plex Sans', sans-serif;
 }
+/* 시스템 다크모드에서 배경(밝음)과 글씨색이 겹쳐 안 보이는 문제 방지 */
+.stApp label,
+.stApp [data-testid="stMarkdownContainer"] p,
+.stApp h1, .stApp h2, .stApp h3,
+.stApp [data-testid="stWidgetLabel"] p {
+  color: #10241C !important;
+}
 
 .sp-stripe {
   height: 5px;
