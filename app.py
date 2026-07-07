@@ -1,4 +1,4 @@
-# app.py
+# app.pyㅇ
 # 실행: streamlit run app.py
 # 데이터·API 키 모두 필요 없습니다 (data.py에 전부 내장).
 
