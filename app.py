@@ -29,13 +29,10 @@ loc_names = [l["name"] for l in LOCATIONS]
 
 
 def render_map(result, label):
-    m, fallback_used = build_map(result, label)
+    m = build_map(result, label)
     st_folium(m, use_container_width=True, height=420, returned_objects=[])
     if result["shelters"]:
-        note = "🔴 나의 위치 · 🟢 최우선 대피소 · ⚪ 차선안 대피소 — 실제 도로 경로(OSRM) 기준"
-        if fallback_used:
-            note += " (일부 구간은 경로 조회 실패로 직선 표시, 점선으로 구분)"
-        st.caption(note)
+        st.caption("🔴 나의 위치 · 🟢 최우선 대피소 · ⚪ 차선안 대피소 (직선거리 기준)")
 
 
 def render_shelter_section(result, disaster_type):
