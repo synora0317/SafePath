@@ -1,6 +1,7 @@
 # map_view.py
 # folium으로 지도를 그립니다: 나의 위치·대피소 마커 + 대피소까지의 경로선.
-# 경로선은 routing.py(OSRM)로 실제 도보 경로를 시도하고, 실패하면 직선으로 대체합니다.
+# 경로선은 routing.py(OSRM)로 실제 도보 경로를 시도하고, 서버 응답 실패시에만
+# 직선으로 대체합니다(경로가 돌아가더라도 실제 도로 경로면 그대로 사용).
 
 import folium
 from theme import PRIMARY, SLATE, TIER_COLORS
@@ -50,7 +51,7 @@ def build_map(result, label):
         ).add_to(m)
         bounds.append([s["위도"], s["경도"]])
 
-        # ---------- 경로선: OSRM 실제 도보 경로 우선, 실패 시 직선 대체 ----------
+        # ---------- 경로선: OSRM 실제 도보 경로(우회 판정 없음), 서버실패 시에만 직선 ----------
         route_coords = get_walking_route(user_lat, user_lon, s["위도"], s["경도"])
         if route_coords is None:
             line_points = [[user_lat, user_lon], [s["위도"], s["경도"]]]
@@ -64,6 +65,11 @@ def build_map(result, label):
             weight=5 if is_primary else 2.5,
             opacity=0.85 if is_primary else 0.55,
         ).add_to(m)
+
+        # 실제 경로일 때는 경로 전체가 보이도록 경유 좌표도 fit_bounds에 포함
+        if route_coords is not None:
+            for lon, lat in route_coords:
+                bounds.append([lat, lon])
 
     if len(bounds) > 1:
         m.fit_bounds(bounds, padding=(30, 30))
