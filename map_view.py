@@ -1,10 +1,11 @@
 # map_view.py
-# folium으로 지도를 그립니다: 나의 위치·대피소 마커 + 대피소까지의 경로선.
-# 경로선은 routing.py(OSRM)로 실제 도보 경로를 시도하고, 실패하면 직선으로 대체합니다.
+# folium으로 지도를 그립니다: 나의 위치·대피소 마커 + 대피소까지의 직선 경로.
+# (OSRM 공개 데모 서버의 클라우드 환경 신뢰성 문제로, 실제 도로 경로 조회는
+#  제거하고 직선 표시로 되돌렸습니다. 실 서비스화 시 카카오/네이버 등
+#  상용 길찾기 API로 대체할 계획입니다.)
 
 import folium
 from theme import PRIMARY, SLATE, TIER_COLORS
-from routing import get_walking_route
 
 USER_COLOR = TIER_COLORS["심각"]   # 브랜드 위험색(레드)
 PRIMARY_COLOR = PRIMARY            # 브랜드 세이프티 그린
@@ -30,7 +31,6 @@ def build_map(result, label):
     ).add_to(m)
 
     bounds = [[user_lat, user_lon]]
-    fallback_used = False  # 마지막 수단인 직선이 실제로 쓰였는지만 표시
 
     for i, (d, s) in enumerate(shelters):
         is_primary = (i == 0)
@@ -50,25 +50,16 @@ def build_map(result, label):
         ).add_to(m)
         bounds.append([s["위도"], s["경도"]])
 
-        # ---------- 경로선: 도보 → 실패시 자동차 도로망 → 그래도 실패시 직선 ----------
-        route_coords, source = get_walking_route(user_lat, user_lon, s["위도"], s["경도"])
-        if route_coords is None:
-            line_points = [[user_lat, user_lon], [s["위도"], s["경도"]]]
-            fallback_used = True
-            line_style = {"dash_array": "6, 8"}  # 직선일 때만 점선으로 구분
-        else:
-            line_points = [[lat, lon] for lon, lat in route_coords]  # OSRM은 [lon,lat] → folium은 [lat,lon]
-            line_style = {}
-
+        # ---------- 경로선: 직선거리 기준 ----------
+        line_points = [[user_lat, user_lon], [s["위도"], s["경도"]]]
         folium.PolyLine(
             line_points,
             color=color,
             weight=5 if is_primary else 2.5,
             opacity=0.85 if is_primary else 0.55,
-            **line_style,
         ).add_to(m)
 
     if len(bounds) > 1:
         m.fit_bounds(bounds, padding=(30, 30))
 
-    return m, fallback_used
+    return m
