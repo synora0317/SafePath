@@ -21,11 +21,16 @@ import requests
 import streamlit as st
 
 OSRM_ROOT = "https://router.project-osrm.org/route/v1"
-TIMEOUT_SEC = 6          # 무료 공개 서버 지연 감안해 여유 있게
-RETRY_COUNT = 2          # 프로필당 최대 시도 횟수 (최초 1회 + 재시도 1회)
-RETRY_DELAY_SEC = 0.6
+TIMEOUT_SEC = 8          # 무료 공개 서버 지연 감안해 더 여유 있게
+RETRY_COUNT = 3          # 프로필당 최대 시도 횟수
+RETRY_DELAY_SEC = 0.8
 MAX_DETOUR_RATIO_FOOT = 2.5
 MAX_DETOUR_RATIO_DRIVING = 4.0
+REQUEST_HEADERS = {
+    # 기본 requests User-Agent("python-requests/x.x")는 일부 공개 API에서
+    # 스크립트성 요청으로 간주해 차단하는 경우가 있어, 명시적으로 지정합니다.
+    "User-Agent": "SafePath-Prototype/1.0 (hackathon demo; contact: team@safepath.local)"
+}
 
 
 def _haversine_km(lat1, lon1, lat2, lon2):
@@ -47,7 +52,7 @@ def _route_length_km(coords):
 def _query_osrm_once(profile, lat1, lon1, lat2, lon2, max_ratio):
     url = f"{OSRM_ROOT}/{profile}/{lon1},{lat1};{lon2},{lat2}"
     params = {"overview": "full", "geometries": "geojson"}
-    resp = requests.get(url, params=params, timeout=TIMEOUT_SEC)
+    resp = requests.get(url, params=params, headers=REQUEST_HEADERS, timeout=TIMEOUT_SEC)
     if resp.status_code != 200:
         return None
     data = resp.json()
