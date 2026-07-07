@@ -1,8 +1,8 @@
 # map_view.py
-# folium으로 지도를 그립니다: 나의 위치·대피소 마커 + 대피소까지의 직선 경로.
-# (OSRM 공개 데모 서버의 클라우드 환경 신뢰성 문제로, 실제 도로 경로 조회는
-#  제거하고 직선 표시로 되돌렸습니다. 실 서비스화 시 카카오/네이버 등
-#  상용 길찾기 API로 대체할 계획입니다.)
+# folium으로 지도를 그립니다: 나의 위치·대피소 마커 + 대피소까지의 직선 표시.
+# (외부 경로 API(OSRM/OpenRouteService)는 클라우드 배포 환경에서 신뢰성 문제가
+#  있어 제거했습니다. 실 서비스화 시 카카오/네이버 등 상용 API로 실제 도로
+#  경로 연동 예정입니다.)
 
 import folium
 from theme import PRIMARY, SLATE, TIER_COLORS
@@ -50,7 +50,7 @@ def build_map(result, label):
         ).add_to(m)
         bounds.append([s["위도"], s["경도"]])
 
-        # ---------- 경로선: 직선거리 기준 ----------
+        # ---------- 직선 표시 ----------
         line_points = [[user_lat, user_lon], [s["위도"], s["경도"]]]
         folium.PolyLine(
             line_points,
