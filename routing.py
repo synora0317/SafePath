@@ -1,4 +1,4 @@
-# routing.py.
+# routing.py
 # OSRM(FOSSGIS 후원 공개 데모 서버, router.project-osrm.org)로 실제 도보 경로를 조회합니다.
 # 주의: 이 서버는 "비상업적, 초당 1회 요청" 제한이 있는 공개 데모입니다.
 #       실제 서비스로 운영할 때는 자체 OSRM 서버를 두거나 카카오/네이버 등
