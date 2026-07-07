@@ -1,6 +1,6 @@
 # app.py
 # 실행: streamlit run app.py
-# 데이터·API 키 모두 필요 없습니다 (data.py에 전부 내장).
+# 데이터는 data.py에 내장. 지도의 실제 도보 경로는 인터넷 연결 및 OSRM 서버 응답이 필요합니다.
 
 import streamlit as st
 from streamlit_folium import st_folium
@@ -34,7 +34,7 @@ def render_map(result, label):
     if result["shelters"]:
         note = "🔴 나의 위치 · 🟢 최우선 대피소 · ⚪ 차선안 대피소 — 실제 도보 경로(OSRM) 기준"
         if fallback_used:
-            note += " (일부 구간은 경로 조회 실패로 직선 표시)"
+            note += " (서버 응답 실패로 이번엔 직선 표시)"
         st.caption(note)
 
 
