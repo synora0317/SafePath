@@ -3,7 +3,8 @@
 # 데이터·API 키 모두 필요 없습니다 (data.py에 전부 내장).
 
 import streamlit as st
-from streamlit_folium import st_folium
+import pandas as pd
+import pydeck as pdk
 
 from data import LOCATIONS
 from risk_engine import (
@@ -15,7 +16,6 @@ from ui_components import (
     no_shelter_html, masthead_html, tier_banner_html,
 )
 from theme import GLOBAL_CSS
-from map_view import build_map
 
 st.set_page_config(page_title="SafePath", page_icon="🧭", layout="centered")
 st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
@@ -28,11 +28,69 @@ st.markdown("---")
 loc_names = [l["name"] for l in LOCATIONS]
 
 
+from theme import PRIMARY, SLATE, TIER_COLORS
+
+
+def _hex_to_rgb(hex_color: str):
+    hex_color = hex_color.lstrip("#")
+    return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
+
+
+USER_COLOR = _hex_to_rgb(TIER_COLORS["심각"])       # 브랜드 위험색(레드) 재사용
+SHELTER_PRIMARY_COLOR = _hex_to_rgb(PRIMARY)        # 브랜드 세이프티 그린
+SHELTER_SECONDARY_COLOR = _hex_to_rgb(SLATE)        # 브랜드 슬레이트
+
+
 def render_map(result, label):
-    m = build_map(result, label)
-    st_folium(m, use_container_width=True, height=420, returned_objects=[])
-    if result["shelters"]:
-        st.caption("🔴 나의 위치 · 🟢 최우선 대피소 · ⚪ 차선안 대피소 (직선거리 기준)")
+    user_lat, user_lon = result["lat"], result["lon"]
+    shelters = result["shelters"]
+
+    # ---------- 마커 (반응형 크기: 실제 미터 반경 + 화면 최소/최대 픽셀 보장) ----------
+    points = [{
+        "lat": user_lat, "lon": user_lon, "name": label,
+        "color": USER_COLOR, "radius_m": 32,
+    }]
+    for i, (d, s) in enumerate(shelters):
+        is_primary = (i == 0)
+        points.append({
+            "lat": s["위도"], "lon": s["경도"],
+            "name": f"{s['대피소명']} ({d*1000:.0f}m)",
+            "color": SHELTER_PRIMARY_COLOR if is_primary else SHELTER_SECONDARY_COLOR,
+            "radius_m": 40 if is_primary else 26,
+        })
+    point_df = pd.DataFrame(points)
+
+    point_layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=point_df,
+        get_position="[lon, lat]",
+        get_fill_color="color",
+        get_radius="radius_m",
+        radius_units="meters",
+        radius_min_pixels=5,   # 축소해도 안 사라지도록 최소 크기 보장
+        radius_max_pixels=26,  # 확대해도 과하게 커지지 않도록 최대 크기 제한
+        stroked=True,
+        get_line_color=[255, 255, 255],
+        line_width_min_pixels=1.5,
+        pickable=True,
+    )
+
+    layers = [point_layer]
+
+    # 대피소가 멀수록 살짝 축소해서 마커가 화면 안에 다 들어오게
+    max_dist = max((d for d, s in shelters), default=0.0)
+    zoom = 16 if max_dist <= 0.3 else 15 if max_dist <= 0.8 else 14 if max_dist <= 1.5 else 13
+    view_state = pdk.ViewState(latitude=user_lat, longitude=user_lon, zoom=zoom)
+
+    st.pydeck_chart(pdk.Deck(
+        layers=layers,
+        initial_view_state=view_state,
+        tooltip={"text": "{name}"},
+        map_provider="carto",
+        map_style=pdk.map_styles.LIGHT,
+    ))
+    if shelters:
+        st.caption("🔴 나의 위치 · 🟢 최우선 대피소 · ⚪ 차선안 대피소")
 
 
 def render_shelter_section(result, disaster_type):
