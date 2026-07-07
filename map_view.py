@@ -1,11 +1,10 @@
 # map_view.py
-# folium으로 지도를 그립니다: 나의 위치·대피소 마커 + 대피소까지의 직선 표시.
-# (외부 경로 API(OSRM/OpenRouteService)는 클라우드 배포 환경에서 신뢰성 문제가
-#  있어 제거했습니다. 실 서비스화 시 카카오/네이버 등 상용 API로 실제 도로
-#  경로 연동 예정입니다.)
+# folium으로 지도를 그립니다: 나의 위치·대피소 마커 + 대피소까지의 경로선.
+# 경로선은 routing.py(OSRM)로 실제 도보 경로를 시도하고, 실패하면 직선으로 대체합니다.
 
 import folium
 from theme import PRIMARY, SLATE, TIER_COLORS
+from routing import get_walking_route
 
 USER_COLOR = TIER_COLORS["심각"]   # 브랜드 위험색(레드)
 PRIMARY_COLOR = PRIMARY            # 브랜드 세이프티 그린
@@ -31,6 +30,7 @@ def build_map(result, label):
     ).add_to(m)
 
     bounds = [[user_lat, user_lon]]
+    fallback_used = False
 
     for i, (d, s) in enumerate(shelters):
         is_primary = (i == 0)
@@ -50,8 +50,14 @@ def build_map(result, label):
         ).add_to(m)
         bounds.append([s["위도"], s["경도"]])
 
-        # ---------- 직선 표시 ----------
-        line_points = [[user_lat, user_lon], [s["위도"], s["경도"]]]
+        # ---------- 경로선: OSRM 실제 도보 경로 우선, 실패 시 직선 대체 ----------
+        route_coords = get_walking_route(user_lat, user_lon, s["위도"], s["경도"])
+        if route_coords is None:
+            line_points = [[user_lat, user_lon], [s["위도"], s["경도"]]]
+            fallback_used = True
+        else:
+            line_points = [[lat, lon] for lon, lat in route_coords]  # OSRM은 [lon,lat] → folium은 [lat,lon]
+
         folium.PolyLine(
             line_points,
             color=color,
@@ -62,4 +68,4 @@ def build_map(result, label):
     if len(bounds) > 1:
         m.fit_bounds(bounds, padding=(30, 30))
 
-    return m
+    return m, fallback_used
