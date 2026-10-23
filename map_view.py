@@ -16,7 +16,7 @@ def build_map(result, label):
     user_lat, user_lon = result["lat"], result["lon"]
     shelters = result["shelters"]
 
-    m = folium.Map(location=[user_lat, user_lon], zoom_start=16, tiles="cartodbpositron")
+    m = folium.Map(location=[user_lat, user_lon], zoom_start=16, tiles="OpenStreetMap")
 
     # ---------- 나의 위치 마커 (미터 단위 Circle → 확대/축소에 반응) ----------
     folium.Circle(
