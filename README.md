@@ -3,7 +3,7 @@
 재난 상황에서 **사용자의 조건(이동수단·동행자·기관 유형)에 맞는 대피소와 이동 경로**를 추천하는 Streamlit 웹앱입니다.
 같은 재난이라도 휠체어 사용자, 반려동물 동반자, 병원·요양시설은 갈 수 있는 대피소가 다르다는 문제에서 출발했습니다.
 
-> 🔗 데모: (배포 후 링크 추가 — 예: https://safepath.streamlit.app)
+> 🔗 데모: https://safepath-hhpeanakfjmbh5w6gpkx2q.streamlit.app/
 
 <!-- 스크린샷: 개인 모드 결과 화면, 기관 모드 결과 화면, 지도 화면 -->
 <!-- ![개인 모드](images/personal.png) ![기관 모드](images/institution.png) -->
